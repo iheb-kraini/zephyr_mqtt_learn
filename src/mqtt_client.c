@@ -89,8 +89,8 @@ static void on_mqtt_publish(struct mqtt_client *const client,
   LOG_INF("topic: '%s', payload: %s",
           evt->param.publish.message.topic.topic.utf8, payload);
 
-  if (strcmp(evt->param.publish.message.topic.topic.utf8,
-             "r_topic_place_holder") == 0) {
+  if (strcmp(evt->param.publish.message.topic.topic.utf8, CONFIG_READ_TOPIC) ==
+      0) {
     struct led_cmd data;
     int ret;
 
@@ -100,6 +100,7 @@ static void on_mqtt_publish(struct mqtt_client *const client,
       LOG_ERR("Invalid JSON payload received");
       return;
     }
+    LOG_INF("payload is :\n%s", payload);
 
     if (data.led != NULL) {
       if (strcmp(data.led, "on") == 0) {
@@ -267,8 +268,8 @@ int app_mqtt_publish(struct mqtt_client *client, const char *topic,
     LOG_ERR("MQTT Publish failed [%d]", rc);
   }
 
-  LOG_INF("Published to topic '%s', QoS %d", param.message.topic.topic.utf8,
-          param.message.topic.qos);
+  // LOG_INF("Published to topic '%s', QoS %d", param.message.topic.topic.utf8,
+  //         param.message.topic.qos);
 
   return rc;
 }

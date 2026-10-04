@@ -24,4 +24,10 @@ config WIFI_SAMPLE_SSID
 config WIFI_SAMPLE_PSK 
     string "WIFI PASSWORD"
     default ""
+config READ_TOPIC
+    string "MQTT TOPIC TO LISTIN TO"
+    default ""
+config WRITE_TOPIC
+    string "MQTT TOPIC TO PUBLISH TO"
+    default ""
 source "Kconfig.zephyr"
