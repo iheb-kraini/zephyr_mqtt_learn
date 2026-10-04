@@ -1,4 +1,4 @@
-const brokerUrl = 'wss://test.mosquitto.org:8081';
+const brokerUrl = 'ws://broker.hivemq.com:8000/mqtt';
 const pubTopic = 'r_topic_place_holder';
 const subTopic = 'r_topic_place_holder/data';
 
