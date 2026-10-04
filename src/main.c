@@ -137,7 +137,7 @@ int main(void) {
     k_sleep(K_SECONDS(2)); /* DNS may still be flaky */
   }
   app_mqtt_connect(&client_ctx);
-  app_mqtt_subscribe(&client_ctx, "r_topic_place_holder");
+  app_mqtt_subscribe(&client_ctx, CONFIG_READ_TOPIC);
 
   if (!led_is_ready_dt(&led0)) {
     return -ENODEV;
@@ -160,7 +160,7 @@ int main(void) {
     } else {
       /* Reconnect if dropped */
       app_mqtt_connect(&client_ctx);
-      app_mqtt_subscribe(&client_ctx, "r_topic_place_holder");
+      app_mqtt_subscribe(&client_ctx, CONFIG_READ_TOPIC);
     }
 
     // Step 1 — fetch all raw data from sensor over I2C
@@ -179,7 +179,7 @@ int main(void) {
              "{\"button\":\"%s\",\"mpu_accel\":{\"x\":%s,\"y\":%s,\"z\":%s}}",
              button_state ? "on" : "off", xs, ys, zs);
 
-    app_mqtt_publish(&client_ctx, "w_topic_place_holder", msg);
+    app_mqtt_publish(&client_ctx, CONFIG_WRITE_TOPIC, msg);
 
     k_sleep(K_MSEC(100));
   }
