@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MQTT Web Telemetry</title>
+  
+  <link rel="stylesheet" href="index.css" />
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+</head>
+<body>
+
+  <div class="card">
+    <h2>MQTT Telemetry Controller</h2>
+    <p>Status: <span id="status" class="status disconnected">Disconnected</span></p>
+
+    <!-- LED Control Section -->
+    <h3>LED Toggle</h3>
+    <button id="led-on-btn">Turn LED ON</button>
+    <button id="led-off-btn">Turn LED OFF</button>
+  </div>
+
+  <div class="card">
+    <h3>Incoming Telemetry Data</h3>
+    <div id="log"></div>
+  </div>
+
+  <script src="src.js"></script>
+</body>
+</html>

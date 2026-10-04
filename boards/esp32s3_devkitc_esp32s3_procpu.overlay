@@ -1,0 +1,39 @@
+
+
+// input system dont require alias it will hande it
+
+
+/{
+	aliases {
+		led0 = &led0;
+	};
+	leds {
+		compatible = "gpio-leds";
+
+		led0: led_0 {
+			gpios = <&gpio0 12 GPIO_ACTIVE_HIGH>;
+			label = "Green LED";
+		};
+	};
+	buttons {
+		compatible = "gpio-keys";
+
+		my_button: my_button {
+			gpios = <&gpio0 15 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>;
+			label = "my input Button";
+			zephyr,code = <INPUT_KEY_1>;
+		};
+	};
+};
+
+&i2c1 {
+	status = "okay";
+    	mpu6500: mpu6500@68 {
+        compatible = "invensense,mpu6050";
+        reg = <0x68>;
+        status = "okay";
+        int-gpios = <&gpio0 4 GPIO_ACTIVE_HIGH>;  /* optional interrupt pin */
+        accel-fs = <2>;    /* +/- 2g, legal: 2, 4, 8, 16 */
+        gyro-fs = <250>;   /* +/- 250 deg/s, legal: 250, 500, 1000, 2000 */
+    };
+};

@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: Apache-2.0
+
+mainmenu "My MQTT App"
+
+config NET_SAMPLE_MQTT_BROKER_HOSTNAME
+    string "MQTT Broker hostname"
+    default "test.mosquitto.org"
+
+config NET_SAMPLE_MQTT_BROKER_PORT
+    string "MQTT Broker port"
+    default "1883"
+
+config NET_SAMPLE_MQTT_PUBLISH_INTERVAL
+    int "MQTT publish interval in seconds"
+    default 10
+
+config NET_SAMPLE_MQTT_PAYLOAD_SIZE
+    int "MQTT payload buffer size"
+    default 256
+
+source "Kconfig.zephyr"
