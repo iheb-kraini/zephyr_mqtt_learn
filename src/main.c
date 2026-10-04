@@ -6,6 +6,7 @@
 #include "mqtt_client.h"
 #include <inttypes.h>
 #include <stdbool.h>
+#include <string.h>
 #include <sys/_intsup.h>
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
@@ -20,12 +21,20 @@
 #include <zephyr/sys/printk.h>
 LOG_MODULE_REGISTER(MAIN);
 
-#define CONFIG_WIFI_SAMPLE_AP_IP_ADDRESS "192.168.1.15"
-#define CONFIG_WIFI_SAMPLE_AP_NETMASK "255.255.255.0"
-#define CONFIG_WIFI_SAMPLE_SSID "ssid_place_holder"
-#define CONFIG_WIFI_SAMPLE_PSK "REDACTED"
+BUILD_ASSERT(sizeof(CONFIG_WIFI_SAMPLE_SSID) > 1,
+             "Set CONFIG_APP_WIFI_SSID in secrets.conf");
+BUILD_ASSERT(sizeof(WIFI_SAMPLE_PSK) > 1,
+             "Set CONFIG_APP_WIFI_PSK in secrets.conf");
+
 bool button_state = false;
 bool led_state = false;
+
+static void format_sensor_value(char *buf, size_t buf_len,
+                                struct sensor_value *v) {
+  int32_t frac = v->val2 < 0 ? -v->val2 : v->val2;
+
+  snprintf(buf, buf_len, "%d.%06d", v->val1, frac);
+}
 
 static K_SEM_DEFINE(net_ready, 0, 1);
 static struct net_mgmt_event_callback ipv4_cb;
@@ -101,7 +110,7 @@ static void button_input_cb(struct input_event *evt, void *user_data) {
 
   printk("Button %d %s at %" PRIu32 "\n", evt->code,
          evt->value ? "pressed" : "released", k_cycle_get_32());
-  if (evt->code == 2 && evt->value == "pressed")
+  if (evt->code == 2 && evt->value)
     button_state = true;
 }
 
@@ -111,12 +120,6 @@ struct sensor_value accel[3];
 struct sensor_value gyro[3];
 struct sensor_value temp;
 
-static void format_sensor_value(char *buf, size_t buf_len,
-                                struct sensor_value *v) {
-  int32_t frac = v->val2 < 0 ? -v->val2 : v->val2;
-
-  snprintf(buf, buf_len, "%d.%06d", v->val1, frac);
-}
 int main(void) {
   net_mgmt_init_event_callback(&cb, wifi_event_handler, NET_EVENT_WIFI_MASK);
   net_mgmt_add_event_callback(&cb);
@@ -166,14 +169,16 @@ int main(void) {
     if (rc == 0) {
       rc = sensor_channel_get(mpu, SENSOR_CHAN_ACCEL_XYZ, accel);
     }
+    char xs[16], ys[16], zs[16];
 
-    double x = sensor_value_to_double(&accel[0]);
-    double y = sensor_value_to_double(&accel[1]);
-    double z = sensor_value_to_double(&accel[2]);
-    snprintf(
-        msg, 256,
-        "{\"button\":\"%s\",\"mpu_accel\":{\"x\":%.2f,\"y\":%.2f,\"z\":%.2f}}",
-        button_state ? "on" : "off", x, y, z);
+    format_sensor_value(xs, sizeof(xs), &accel[0]);
+    format_sensor_value(ys, sizeof(ys), &accel[1]);
+    format_sensor_value(zs, sizeof(zs), &accel[2]);
+
+    snprintf(msg, 256,
+             "{\"button\":\"%s\",\"mpu_accel\":{\"x\":%s,\"y\":%s,\"z\":%s}}",
+             button_state ? "on" : "off", xs, ys, zs);
+
     app_mqtt_publish(&client_ctx, "w_topic_place_holder", msg);
 
     k_sleep(K_MSEC(100));
