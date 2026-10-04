@@ -3,27 +3,47 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MQTT Web Telemetry</title>
-  
+  <title>MQTT Telemetry</title>
   <link rel="stylesheet" href="index.css" />
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 </head>
 <body>
+  <header>
+    <h1>MQTT Telemetry</h1>
+    <span id="status" class="pill disconnected">Disconnected</span>
+  </header>
 
-  <div class="card">
-    <h2>MQTT Telemetry Controller</h2>
-    <p>Status: <span id="status" class="status disconnected">Disconnected</span></p>
+  <section class="card">
+    <h2>LED</h2>
+    <div class="row">
+      <span id="led-label">Off</span>
+      <label class="switch">
+        <input type="checkbox" id="led-switch" aria-label="LED" />
+        <span class="slider"></span>
+      </label>
+    </div>
+  </section>
 
-    <!-- LED Control Section -->
-    <h3>LED Toggle</h3>
-    <button id="led-on-btn">Turn LED ON</button>
-    <button id="led-off-btn">Turn LED OFF</button>
-  </div>
+  <section class="card">
+    <h2>Button</h2>
+    <div class="row">
+      <span id="btn-label">Waiting for data</span>
+      <label class="switch readonly">
+        <input type="checkbox" id="btn-switch" disabled aria-label="Button state" />
+        <span class="slider"></span>
+      </label>
+    </div>
+  </section>
 
-  <div class="card">
-    <h3>Incoming Telemetry Data</h3>
-    <div id="log"></div>
-  </div>
+  <section class="card">
+    <h2>Acceleration</h2>
+    <div class="axes">
+      <div class="axis"><span class="name">X</span><span class="value" id="ax-x">0.00</span><div class="bar"><i id="bar-x"></i></div></div>
+      <div class="axis"><span class="name">Y</span><span class="value" id="ax-y">0.00</span><div class="bar"><i id="bar-y"></i></div></div>
+      <div class="axis"><span class="name">Z</span><span class="value" id="ax-z">0.00</span><div class="bar"><i id="bar-z"></i></div></div>
+    </div>
+    <p class="meta">Last update: <span id="updated">never</span></p>
+  </section>
 
   <script src="src.js"></script>
 </body>

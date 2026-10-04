@@ -1,78 +1,80 @@
-// Broker details (Mosquitto Public Broker WebSocket Port)
 const brokerUrl = 'wss://test.mosquitto.org:8081';
-
-// Topics
 const pubTopic = 'r_topic_place_holder';
 const subTopic = 'r_topic_place_holder/data';
 
-// DOM elements
-const statusEl = document.getElementById('status');
-const logEl = document.getElementById('log');
-const ledOnBtn = document.getElementById('led-on-btn');
-const ledOffBtn = document.getElementById('led-off-btn');
+// Full-scale of the accel bars (change to match your MPU range, e.g. 2 for ±2g)
+const ACCEL_MAX = 2;
 
-function log(msg) {
-  const entry = document.createElement('div');
-  entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
-  logEl.appendChild(entry);
-  logEl.scrollTop = logEl.scrollHeight;
-}
+const $ = (id) => document.getElementById(id);
+const statusEl = $('status');
+const ledSwitch = $('led-switch');
+const ledLabel = $('led-label');
+const btnSwitch = $('btn-switch');
+const btnLabel = $('btn-label');
 
-log('Connecting to broker...');
-
-// Initialize MQTT Client
 const client = mqtt.connect(brokerUrl, {
   clientId: 'js_client_' + Math.random().toString(16).substring(2, 10),
   clean: true,
   connectTimeout: 4000,
 });
 
-// MQTT Event Handlers
 client.on('connect', () => {
   statusEl.textContent = 'Connected';
-  statusEl.className = 'status connected';
-  log('Connected to ' + brokerUrl);
-
-  // Subscribe to telemetry incoming data topic
-  client.subscribe(subTopic, (err) => {
-    if (!err) {
-      log(`Subscribed to topic: "${subTopic}"`);
-    } else {
-      log(`Subscription error: ${err}`);
-    }
-  });
-});
-
-client.on('message', (topic, payload) => {
-  try {
-    const data = JSON.parse(payload.toString());
-    log(`Received on [${topic}]: Button=${data.button || 'N/A'}, Accel=X:${data.mpu_accel?.x ?? 0}, Y:${data.mpu_accel?.y ?? 0}, Z:${data.mpu_accel?.z ?? 0}`);
-  } catch (e) {
-    // Fallback if message isn't valid JSON
-    log(`Received on [${topic}] (raw): ${payload.toString()}`);
-  }
-});
-
-client.on('error', (err) => {
-  log('Connection error: ' + err);
+  statusEl.className = 'pill connected';
+  client.subscribe(subTopic);
 });
 
 client.on('close', () => {
   statusEl.textContent = 'Disconnected';
-  statusEl.className = 'status disconnected';
+  statusEl.className = 'pill disconnected';
 });
 
-// Helper function to send LED commands
-function sendLedCommand(state) {
-  if (client.connected) {
-    const payload = JSON.stringify({ led: state });
-    client.publish(pubTopic, payload);
-    log(`Published to [${pubTopic}]: ${payload}`);
-  } else {
-    alert('MQTT client is not connected!');
-  }
+client.on('error', (err) => console.error('MQTT error:', err));
+
+// Treat common "pressed" values as ON
+function isOn(v) {
+  return v === true || v === 1 || ['1', 'on', 'true', 'pressed', 'down'].includes(String(v).toLowerCase());
 }
 
-// Event Listeners for LED Buttons
-ledOnBtn.addEventListener('click', () => sendLedCommand('on'));
-ledOffBtn.addEventListener('click', () => sendLedCommand('off'));
+function setAxis(axis, value) {
+  const v = Number(value) || 0;
+  $('ax-' + axis).textContent = v.toFixed(2);
+  const pct = Math.min(Math.abs(v) / ACCEL_MAX, 1) * 50; // half the bar each way
+  const bar = $('bar-' + axis);
+  bar.style.width = pct + '%';
+  bar.style.left = v >= 0 ? '50%' : 50 - pct + '%';
+}
+
+client.on('message', (topic, payload) => {
+  let data;
+  try {
+    data = JSON.parse(payload.toString());
+  } catch {
+    return; // ignore non-JSON messages
+  }
+
+  if (data.button !== undefined) {
+    const on = isOn(data.button);
+    btnSwitch.checked = on;
+    btnLabel.textContent = on ? 'Pressed' : 'Released';
+  }
+
+  if (data.mpu_accel) {
+    setAxis('x', data.mpu_accel.x);
+    setAxis('y', data.mpu_accel.y);
+    setAxis('z', data.mpu_accel.z);
+  }
+
+  $('updated').textContent = new Date().toLocaleTimeString();
+});
+
+// LED switch -> publish on/off
+ledSwitch.addEventListener('change', () => {
+  const state = ledSwitch.checked ? 'on' : 'off';
+  if (!client.connected) {
+    ledSwitch.checked = !ledSwitch.checked; // revert
+    return;
+  }
+  client.publish(pubTopic, JSON.stringify({ led: state }));
+  ledLabel.textContent = ledSwitch.checked ? 'On' : 'Off';
+});
