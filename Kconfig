@@ -18,4 +18,10 @@ config NET_SAMPLE_MQTT_PAYLOAD_SIZE
     int "MQTT payload buffer size"
     default 256
 
+config WIFI_SAMPLE_SSID 
+    string "WIFI SSID"
+    default "" 
+config WIFI_SAMPLE_PSK 
+    string "WIFI PASSWORD"
+    default ""
 source "Kconfig.zephyr"
