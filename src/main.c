@@ -23,7 +23,7 @@ LOG_MODULE_REGISTER(MAIN);
 
 BUILD_ASSERT(sizeof(CONFIG_WIFI_SAMPLE_SSID) > 1,
              "Set CONFIG_APP_WIFI_SSID in secrets.conf");
-BUILD_ASSERT(sizeof(WIFI_SAMPLE_PSK) > 1,
+BUILD_ASSERT(sizeof(CONFIG_WIFI_SAMPLE_PSK) > 1,
              "Set CONFIG_APP_WIFI_PSK in secrets.conf");
 
 bool button_state = false;
@@ -112,6 +112,9 @@ static void button_input_cb(struct input_event *evt, void *user_data) {
          evt->value ? "pressed" : "released", k_cycle_get_32());
   if (evt->code == 2 && evt->value)
     button_state = true;
+  else {
+    button_state = false;
+  }
 }
 
 INPUT_CALLBACK_DEFINE(NULL, button_input_cb, NULL);
@@ -149,6 +152,7 @@ int main(void) {
   printk("Press the button\n");
   char msg[256]; // json publish data buffer
   while (true) {
+    LOG_INF("led_state:%s", led_state ? "on" : "off");
     if (led_state) {
       led_on_dt(&led0);
     } else {
