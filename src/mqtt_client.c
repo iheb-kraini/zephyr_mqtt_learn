@@ -7,6 +7,7 @@ LOG_MODULE_REGISTER(app_mqtt, LOG_LEVEL_DBG);
 #include <zephyr/data/json.h>
 #include <zephyr/kernel.h>
 #include <zephyr/net/mqtt.h>
+#include <zephyr/net/tls_credentials.h>
 #include <zephyr/posix/arpa/inet.h>
 #include <zephyr/posix/netdb.h>
 #include <zephyr/posix/poll.h>
@@ -40,6 +41,30 @@ static int nfds;
 /* MQTT connectivity status flag */
 bool mqtt_connected;
 
+#if defined(CONFIG_MQTT_LIB_TLS)
+#include "cert.h"
+
+#define TLS_SNI_HOSTNAME CONFIG_NET_SAMPLE_MQTT_BROKER_HOSTNAME
+#define APP_CA_CERT_TAG 1
+
+static const sec_tag_t m_sec_tags[] = {
+    APP_CA_CERT_TAG,
+};
+
+static int tls_init(void) {
+  int rc;
+
+  rc = tls_credential_add(APP_CA_CERT_TAG, TLS_CREDENTIAL_CA_CERTIFICATE,
+                          ca_certificate, sizeof(ca_certificate));
+  if (rc < 0) {
+    LOG_ERR("Failed to register public certificate: %d", rc);
+    return rc;
+  }
+
+  return rc;
+}
+#endif
+
 // /* MQTT client ID buffer */
 // static uint8_t client_id[50];
 
@@ -47,6 +72,11 @@ static void prepare_fds(struct mqtt_client *client) {
   if (client->transport.type == MQTT_TRANSPORT_NON_SECURE) {
     fds[0].fd = client->transport.tcp.sock;
   }
+#if defined(CONFIG_MQTT_LIB_TLS)
+  else if (client->transport.type == MQTT_TRANSPORT_SECURE) {
+    fds[0].fd = client->transport.tls.sock;
+  }
+#endif
 
   fds[0].events = POLLIN;
   nfds = 1;
@@ -399,6 +429,24 @@ int app_mqtt_init(struct mqtt_client *client) {
   /* MQTT client configuration */
   // init_mqtt_client_id();
   mqtt_client_init(client);
+#if defined(CONFIG_MQTT_LIB_TLS)
+  rc = tls_init();
+  if (rc != 0) {
+    LOG_ERR("TLS init failed [%d]", rc);
+    return rc;
+  }
+
+  struct mqtt_sec_config *tls_config = &client->transport.tls.config;
+
+  tls_config->peer_verify = TLS_PEER_VERIFY_REQUIRED;
+  tls_config->cipher_list = NULL;
+  tls_config->cipher_count = 0;
+  tls_config->sec_tag_list = m_sec_tags;
+  tls_config->sec_tag_count = ARRAY_SIZE(m_sec_tags);
+  tls_config->hostname = TLS_SNI_HOSTNAME;
+
+  client->transport.type = MQTT_TRANSPORT_SECURE;
+#endif
   client->broker = &broker;
   client->evt_cb = mqtt_event_handler;
   client->client_id.utf8 = (uint8_t *)"my_device";
