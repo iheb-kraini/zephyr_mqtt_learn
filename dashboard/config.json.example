@@ -1,0 +1,6 @@
+{
+  "brokerUrl": "brokerUrl",
+  "pubTopic": "pubTopic",
+  "subTopic": "subTopic",
+  "accelMax": 2
+}
