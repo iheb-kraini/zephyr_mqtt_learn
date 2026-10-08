@@ -1,4 +1,3 @@
-
 #ifndef __MQTT_CLIENT_H__
 #define __MQTT_CLIENT_H__
 #include <zephyr/net/mqtt.h>

@@ -447,6 +447,7 @@ int app_mqtt_init(struct mqtt_client *client) {
 
   client->transport.type = MQTT_TRANSPORT_SECURE;
 #endif
+  client->transport.if_name = "wlan0";
   client->broker = &broker;
   client->evt_cb = mqtt_event_handler;
   client->client_id.utf8 = (uint8_t *)"my_device";

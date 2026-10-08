@@ -24,6 +24,10 @@
 			zephyr,code = <INPUT_KEY_1>;
 		};
 	};
+	wifi_ap: wifi_ap {
+		compatible = "espressif,esp32-wifi";
+		status = "okay";
+	};
 };
 
 &i2c1 {
