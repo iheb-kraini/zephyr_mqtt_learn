@@ -2,3 +2,5 @@ build
 secrets.conf
 todo
 dashboard/config.json
+build.commnad.sh
+.vscode
